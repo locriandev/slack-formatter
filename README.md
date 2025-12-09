@@ -6,6 +6,7 @@ A FastAPI-based web service and CLI tool for fetching and formatting Slack threa
 
 - **FastAPI Web Service**: HTTP API endpoint for fetching Slack threads
 - **CLI Tool**: Command-line script for direct thread retrieval
+- **Claude Code Integration**: Custom slash command for seamless use within Claude Code
 - **Docker Support**: Containerized deployment with Red Hat UBI base image
 - **Clean Formatting**: Converts Slack threads into readable conversation format
 - **User Name Resolution**: Automatically resolves Slack user IDs to real names
@@ -104,6 +105,34 @@ Then access via curl:
 curl "http://localhost:8000/thread?url=https://workspace.slack.com/archives/CHANNEL_ID/pTIMESTAMP"
 ```
 
+### Claude Code Integration
+
+This repository includes a custom slash command for use with [Claude Code](https://claude.ai/code).
+
+The `/slack_thread` command fetches and summarizes Slack conversations directly within your Claude Code session.
+
+**Usage:**
+
+```
+/slack_thread https://workspace.slack.com/archives/CHANNEL_ID/pTIMESTAMP
+```
+
+**Example:**
+
+```
+/slack_thread https://redhat-internal.slack.com/archives/CB95J6R4N/p1764683404081219
+```
+
+**What it does:**
+1. Fetches the Slack thread using the production API endpoint
+2. Returns the formatted conversation
+3. Claude automatically summarizes the conversation
+
+The slash command is defined in `.claude/commands/slack_thread.md` and uses the production API at:
+```
+https://slack-formatter-slack-formatter.apps.artc2023.pc3z.p1.openshiftapps.com
+```
+
 ## API Endpoints
 
 ### `GET /thread`
@@ -153,3 +182,67 @@ curl http://localhost:8000/
 3. **User Resolution**: Resolves Slack user IDs to real names using the `users.info` endpoint (with caching)
 
 4. **Formatting**: Converts messages to readable format: `- Username: Message text`
+
+## Development
+
+### Project Structure
+
+```
+slack-formatter/
+├── .claude/
+│   └── commands/
+│       └── slack_thread.md    # Claude Code slash command definition
+├── resources/                  # OpenShift deployment manifests
+│   ├── buildconfig.yaml
+│   ├── deploymentconfig.yaml
+│   ├── is.yaml
+│   ├── route.yaml
+│   └── service.yaml
+├── summarizerlib/
+│   ├── __init__.py
+│   └── slack.py               # Core Slack integration logic
+├── app.py                     # FastAPI application
+├── fetch_conversation.py      # CLI tool
+├── Dockerfile                 # Container build instructions
+├── requirements.txt           # Python dependencies
+└── README.md
+
+```
+
+### OpenShift Deployment
+
+The `resources/` directory contains OpenShift manifests for deploying to OpenShift:
+
+```bash
+# Apply all manifests
+oc apply -f resources/
+
+# The deployment expects an existing secret named 'slack-credentials' with keys:
+# - slack-token
+# - user-token
+```
+
+### Running Tests
+
+```bash
+# Install development dependencies
+pip install -r requirements.txt
+
+# Run the application
+python fetch_conversation.py "https://workspace.slack.com/archives/CHANNEL/pTIMESTAMP"
+```
+
+### Building for Production
+
+```bash
+# Build Docker image
+docker build -t slack-formatter:latest .
+
+# Run in production mode
+docker run -d \
+  -p 8000:8000 \
+  -e SLACK_TOKEN=$SLACK_TOKEN \
+  -e USER_TOKEN=$USER_TOKEN \
+  --name slack-formatter \
+  slack-formatter:latest
+```
