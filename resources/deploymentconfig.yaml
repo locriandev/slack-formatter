@@ -1,0 +1,41 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: slack-formatter
+spec:
+  replicas: 1
+  selector:
+    app: slack-formatter
+  template:
+    metadata:
+      labels:
+        app: slack-formatter
+    spec:
+      containers:
+        - name: slack-formatter
+          image: slack-formatter:latest
+          imagePullPolicy: Always
+          env:
+            - name: SLACK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: slack-credentials
+                  key: slack-token
+            - name: USER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: slack-credentials
+                  key: user-token
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+  triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - slack-formatter
+        from:
+          kind: ImageStreamTag
+          name: slack-formatter:latest

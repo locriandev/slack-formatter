@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: slack-formatter
+    app.kubernetes.io/component: slack-formatter
+    app.kubernetes.io/instance: slack-formatter
+  name: slack-formatter
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: 8000-tcp
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    deploymentconfig: slack-formatter
+  sessionAffinity: None
+  type: ClusterIP
