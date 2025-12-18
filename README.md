@@ -133,6 +133,23 @@ The slash command is defined in `.claude/commands/slack_thread.md` and uses the 
 https://slack-formatter-slack-formatter.apps.artc2023.pc3z.p1.openshiftapps.com
 ```
 
+**Setting up for global use:**
+
+To use this slash command in all your Claude Code projects (not just this repository):
+
+```bash
+# Copy the command to your global Claude configuration
+mkdir -p ~/.claude/commands
+cp .claude/commands/slack_thread.md ~/.claude/commands/
+
+# Optionally, copy the permissions settings to allow curl commands globally
+cp .claude/settings.local.json ~/.claude/
+```
+
+After copying:
+- The `/slack_thread` command will be available in any project where you use Claude Code
+- The permissions in `settings.local.json` allow Claude to run `curl` commands without asking for approval each time (useful for the slash command)
+
 ## API Endpoints
 
 ### `GET /thread`
